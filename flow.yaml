@@ -1,0 +1,43 @@
+version: "0.1"
+
+flow:
+  # FIRST, capture the voice input and convert it to text
+  voice_input:
+    action: stt
+    service: whisper
+    # Process the voice input
+    prompt:
+      - heading: Voice Input
+        var: user_speech
+
+  # THEN, generate an unstructured response from the text
+  meeting_review:
+    action: llm
+    model:
+      model: claude-3-5-sonnet-20240620
+      temperature: 1
+    prompt:
+      - heading: Meeting Notes
+        link: voice_input
+      - text: |
+          Review these meeting notes and identify key decisions and action items.
+
+  # THEN, structure the response
+  structure:
+    action: llm
+    model: gpt-4o
+    temperature: 0
+    prompt:
+      - heading: Meeting Notes Review
+        link: meeting_review
+      - text: |
+          Based on the meeting notes review, what are the key decisions and action items? Summarize the main points.
+    output_schema:
+      key_decisions:
+        type: array
+        items:
+          type: string
+      action_items:
+        type: array
+        items:
+          type: string
